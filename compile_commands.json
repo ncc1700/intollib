@@ -1,0 +1,6 @@
+[
+{
+  "directory": "C:\\projects\\intolliib",
+  "arguments": ["C:\\Users\\ncc\\scoop\\apps\\llvm\\current\\bin\\clang.exe", "-c", "-Qunused-arguments", "-Iincludes", "-o", "build\\.objs\\intollib-win-amd64\\windows\\x64\\release\\src\\main.c.obj", "src\\main.c"],
+  "file": "src\\main.c"
+}]
