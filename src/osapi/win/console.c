@@ -3,30 +3,57 @@
 #include <intollib.h>
 
 
-
-ILIB_API void SysPrint(String str){
+ILIB_API void SysPrintCStr(const char* cstr){
     unsigned long amount = 0;
     WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), 
-            str.buffer, str.length, 
+            cstr, 
+            GetStringLength((u8*)cstr), 
             &amount, NULL);
 }
 
-ILIB_API void SysFormatPrint(String str, ...){
+ILIB_API void SysPrint(String str){
+    char* cstr = QStringToCStringHeap(str);
+    unsigned long amount = 0;
+    WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), 
+            cstr, str.length, 
+            &amount, NULL);
+    FreeMemory(cstr);
+}
+
+ILIB_API void SysDebug(DebugType type, String str, ...){
+    switch(type){
+        case PASS:
+            SysPrint(QSTR("[PASS] "));
+            break;
+        case FAIL:
+            SysPrint(QSTR("[FAIL] "));
+            break;
+        case INFO:
+            SysPrint(QSTR("[INFO] "));
+            break;
+        case WARNING:
+            SysPrint(QSTR("[WARNING] "));
+            break;
+        default:
+            SysPrint(QSTR("[?] "));
+            break;
+    }
     // very bad
     // TODO: make better
     char buffer[256];
-    char cstr[128];
-
-    u64 cindex = 0;
-    for(cindex = 0; cindex < str.length; cindex++){
-        if(cindex >= 127) break;
-        cstr[cindex] = str.buffer[cindex];
+    String trueStr;
+    if(str.length >= 127){
+        trueStr = SliceString(str, 126);
+    } else {
+        trueStr = DupeString(str);
     }
-    cstr[cindex] = '\0';
+    char* cstr = QStringToCStringHeap(trueStr);
     va_list arg;
     va_start(arg, C(str.buffer));
     ImplVsnprintf(buffer, 256, 
                     cstr, arg);
     va_end(arg);
     SysPrint(QSTR(buffer));
+    SysPrint(QSTR("\n"));
+    FreeMemory(cstr);
 }

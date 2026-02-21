@@ -27,8 +27,12 @@ typedef u8 bool
 typedef enum _IStatus {
     ISTATUS_SUCCESS, ISTATUS_UNKNOWN, ISTATUS_UNIMPLEMENTED,
     ISTATUS_CANT_CREATE_HEAP, ISTATUS_CANT_FREE, ISTATUS_CANT_CLEANUP,
-    ISTATUS_OUT_OF_MEMORY, ISTATUS_CANT_CREATE_WINDOW,
+    ISTATUS_OUT_OF_MEMORY, ISTATUS_CANT_CREATE_WINDOW, ISTATUS_SDL_FAIL,
+    ISTATUS_WGPU_FAIL
 } IStatus;
+typedef enum _DebugType {
+    PASS, FAIL, WARNING, UNKNOWN, INFO
+} DebugType;
 
 #define FALSE 0
 #define TRUE 1
@@ -103,12 +107,15 @@ ILIB_API String DupeStringArena(Arena* arena, String src);
 ILIB_API String SliceString(String string, u64 length);
 
 // Console API
+ILIB_API void SysPrintCStr(const char* cstr);
 ILIB_API void SysPrint(String str);
-ILIB_API void SysFormatPrint(String str, ...);
+ILIB_API void SysDebug(DebugType type, String str, ...);
 
 // Window API
 typedef struct _Window {
     void* winData;
+    void* renderer;
+    Arena arena;
     u64 curKey;
     u8 curMouse;
     u32 width;
@@ -124,4 +131,7 @@ ILIB_API void EndDrawing(Window* window);
 ILIB_API IStatus DeleteWindow(Window* window);
 ILIB_API IStatus CleanupWindow();
 
+// Renderer API
+ILIB_API IStatus SetupRenderer();
+ILIB_API IStatus CleanupRenderer();
 #endif

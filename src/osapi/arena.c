@@ -4,7 +4,7 @@
 
 
 
-IStatus CreateArena(Arena* arena, u64 size){
+ILIB_API IStatus CreateArena(Arena* arena, u64 size){
     arena->size = size;
     arena->base = AllocateMemory(arena->size);
     if(arena->base == NULL){
@@ -15,7 +15,7 @@ IStatus CreateArena(Arena* arena, u64 size){
 }
 
 
-void* PushMemoryFromArena(Arena* arena, u64 size){
+ILIB_API void* PushMemoryFromArena(Arena* arena, u64 size){
     if(arena->base == NULL){
         return NULL;
     }
@@ -28,18 +28,18 @@ void* PushMemoryFromArena(Arena* arena, u64 size){
 }
 
 
-IStatus PopMemoryFromArena(Arena* arena, u64 size){
+ILIB_API IStatus PopMemoryFromArena(Arena* arena, u64 size){
     if(size >= arena->used) arena->used = 0;
     else arena->used -= size;
     return ISTATUS_SUCCESS;
 }
 
-IStatus ClearArena(Arena* arena){
+ILIB_API IStatus ClearArena(Arena* arena){
     arena->used = 0;
     return ISTATUS_SUCCESS;
 }
 
-IStatus DestroyArena(Arena* arena){
+ILIB_API IStatus DestroyArena(Arena* arena){
     IStatus result = FreeMemory(arena->base);
     if(result == FALSE) return FALSE;
     arena->size = 0;

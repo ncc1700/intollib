@@ -3,16 +3,17 @@ target("intollib-win64")
     set_kind("shared")
     set_targetdir("output/win-amd64")
     add_linkdirs("lib/win-msvc-amd64")
-    add_links("SDL3-static");
+    add_links("SDL3-static", "wgpu_native");
 
     add_syslinks("kernel32.lib", 
         "ucrt.lib", "user32.lib", "Ole32.lib", "gdi32.lib", "advapi32.lib",
         "shell32.lib", "imm32.lib", "winmm.lib", "setupapi.lib", "version.lib",
-        "OleAut32.lib")
+        "OleAut32.lib", "ntdll.lib", "Ws2_32.lib", "opengl32.lib", "userenv.lib",
+        "Propsys.lib", "RuntimeObject.lib")
 
     add_files("src/osapi/win/*.c", "src/osapi/*.c");
-    add_files("src/extern/*.c", "src/extern/**/*.c");
-    add_files("src/abs/sdl3vul/*.c", "src/abs/sdl3vul/**/*.c")
+    add_files("src/extern/**/*.c");
+    add_files("src/abs/sdl3wgpu/*.c", "src/abs/sdl3wgpu/**/*.c")
     add_files("src/*.c")
     add_includedirs("includes")
 
