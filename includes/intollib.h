@@ -126,12 +126,21 @@ typedef struct _Window {
 ILIB_API IStatus SetupWindow();
 ILIB_API IStatus InitWindow(Window* window, String title, u32 width, u32 height);
 ILIB_API bool WindowIsRunning(Window* window);
-ILIB_API void BeginDrawing(Window* window);
-ILIB_API void EndDrawing(Window* window);
 ILIB_API IStatus DeleteWindow(Window* window);
 ILIB_API IStatus CleanupWindow();
 
 // Renderer API
+typedef struct _Colorf {
+    float r;
+    float g;
+    float b;
+    float a;
+} Colorf;
+#define RGBF(r, g, b, a) ((Colorf){r, g, b, a})
 ILIB_API IStatus SetupRenderer();
+ILIB_API void BeginDrawing(Window* window);
+ILIB_API void DrawHelloTriangle(Window* window);
+//ILIB_API void ClearBackground(Window* window, Colorf color);
+ILIB_API void EndDrawing(Window* window);
 ILIB_API IStatus CleanupRenderer();
 #endif

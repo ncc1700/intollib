@@ -15,7 +15,7 @@ int main(){
     }
     while(WindowIsRunning(&win)){
         BeginDrawing(&win);
-
+        DrawHelloTriangle(&win);
         EndDrawing(&win);
     }
     DeleteWindow(&win);

@@ -14,12 +14,22 @@
 
 
 typedef struct _WindowData {
+    WGPUCommandEncoder commandEncoder;
+    WGPUSurfaceTexture surfaceText;
+    WGPUTextureView frame;
+    WGPUSurfaceCapabilities surfaceCapablities;
+    WGPUSurfaceConfiguration surfaceConfig;
+    
     SDL_Window* window;
+    WGPUCommandBuffer cBuffer;
+    WGPURenderPipeline renderPipeline;
     WGPUSurface surface;
     WGPUAdapter adapter;
     WGPUDevice device;
     WGPUQueue queue;
     WGPUPipelineLayout pipelineLayout;
+    WGPUShaderModule shaderMod;
+    bool doStuffInEndDrawing;
 } WindowData;
 
 
