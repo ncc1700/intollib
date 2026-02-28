@@ -14,12 +14,17 @@
 
 
 typedef struct _WindowData {
+    Arena* arena;
+    WGPUBindGroup bindGroup;
+    WGPUBindGroupLayout bGroupLayout;
+    WGPUBuffer colorBuf;
+    WGPUBuffer scaleBuf;
     WGPUCommandEncoder commandEncoder;
+    WGPURenderPassEncoder renderPassEncoder;
     WGPUSurfaceTexture surfaceText;
     WGPUTextureView frame;
     WGPUSurfaceCapabilities surfaceCapablities;
     WGPUSurfaceConfiguration surfaceConfig;
-    
     SDL_Window* window;
     WGPUCommandBuffer cBuffer;
     WGPURenderPipeline renderPipeline;

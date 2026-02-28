@@ -14,7 +14,7 @@ int main(){
         return status;
     }
     while(WindowIsRunning(&win)){
-        BeginDrawing(&win);
+        BeginDrawing(&win, RGBF(0.0, 0.3, 0.3, 1.0));
         DrawHelloTriangle(&win);
         EndDrawing(&win);
     }

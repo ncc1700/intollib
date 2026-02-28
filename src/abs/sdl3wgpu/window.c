@@ -55,6 +55,7 @@ ILIB_API IStatus InitWindow(Window* window, String title, u32 width, u32 height)
         status = ISTATUS_SDL_FAIL;
         goto EXIT;
     }
+    data->arena = &window->arena;
     SetupRendererForWindow(data);
     window->height = height;
     window->width = width;

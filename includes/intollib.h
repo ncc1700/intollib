@@ -20,6 +20,8 @@ typedef int64_t i64;
 typedef uintptr_t uptr;
 typedef intptr_t iptr;
 
+typedef uptr Handle;
+
 #ifndef bool
 typedef u8 bool
 #endif
@@ -28,7 +30,8 @@ typedef enum _IStatus {
     ISTATUS_SUCCESS, ISTATUS_UNKNOWN, ISTATUS_UNIMPLEMENTED,
     ISTATUS_CANT_CREATE_HEAP, ISTATUS_CANT_FREE, ISTATUS_CANT_CLEANUP,
     ISTATUS_OUT_OF_MEMORY, ISTATUS_CANT_CREATE_WINDOW, ISTATUS_SDL_FAIL,
-    ISTATUS_WGPU_FAIL
+    ISTATUS_WGPU_FAIL, ISTATUS_INVALID_PARAMETERS, ISTATUS_CANT_CREATE_FILE,
+    ISTATUS_ZERO_SIZE, ISTATUS_CANT_READ
 } IStatus;
 typedef enum _DebugType {
     PASS, FAIL, WARNING, UNKNOWN, INFO
@@ -44,13 +47,14 @@ typedef enum _DebugType {
 #define ARR_LENGTH(x) sizeof(x)/sizeof(x[0]);
 #define IS_SUCCESS(x) (x == ISTATUS_SUCCESS)
 
+
+
 // Setup
 ILIB_API IStatus IntollibSetup();
 ILIB_API IStatus IntollibCleanup();
 
 // Memory API
 // some taken from my OS, nearlands
-
 #define KB(x) ((u64)(x) << 10)
 #define MB(x) ((u64)(x) << 20)
 #define GB(x) ((u64)(x) << 30)
@@ -106,10 +110,26 @@ ILIB_API String DupeStringHeap(String src);
 ILIB_API String DupeStringArena(Arena* arena, String src);
 ILIB_API String SliceString(String string, u64 length);
 
+// IStatus stuff
+ILIB_API const char* IStatusToCString(IStatus status);
+ILIB_API String IStatusToString(IStatus status);
+
 // Console API
 ILIB_API void SysPrintCStr(const char* cstr);
 ILIB_API void SysPrint(String str);
 ILIB_API void SysDebug(DebugType type, String str, ...);
+
+// File API
+typedef enum _FileOpenType {
+    FILE_OPEN,
+    FILE_CREATE_ALWAYS,
+    FILE_CREATE_IF_NOT_EXIST
+} FileOpenType;
+
+ILIB_API IStatus FileOpen(Handle* handle, String fileName, char access, FileOpenType type);
+ILIB_API IStatus FileReadHeap(Handle file, String* str);
+ILIB_API IStatus FileReadArena(Arena* arena, Handle file, String* str);
+ILIB_API IStatus FileClose(Handle file);
 
 // Window API
 typedef struct _Window {
@@ -138,7 +158,7 @@ typedef struct _Colorf {
 } Colorf;
 #define RGBF(r, g, b, a) ((Colorf){r, g, b, a})
 ILIB_API IStatus SetupRenderer();
-ILIB_API void BeginDrawing(Window* window);
+ILIB_API void BeginDrawing(Window* window, Colorf backgroundColor);
 ILIB_API void DrawHelloTriangle(Window* window);
 //ILIB_API void ClearBackground(Window* window, Colorf color);
 ILIB_API void EndDrawing(Window* window);

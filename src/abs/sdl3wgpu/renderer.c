@@ -3,6 +3,7 @@
 #include "intollib.h"
 #include "sdl3wgpu.h"
 #include "webgpu/webgpu.h"
+#include <math.h>
 
 
 static WGPUInstance instance = {0};
@@ -73,13 +74,25 @@ WGPUShaderModule LoadShader(WGPUDevice device, String name, String shaderCode){
     return wgpuDeviceCreateShaderModule(device, &shaderModDesc);
 }
 
-
-IStatus SetupRendererForWindow(WindowData* data){
-    data->surface = (void*)SDL_GetWGPUSurface(instance, data->window);
-    if(data->surface == NULL){
-        SysDebug(FAIL, QSTR("couldn't create WGPU surface"));
-        return ISTATUS_WGPU_FAIL;
+WGPUShaderModule LoadShaderFromFile(WindowData* data, String fileName){
+    Handle file = 0;
+    IStatus status = FileOpen(&file, fileName, 'r', FILE_OPEN);
+    if(!IS_SUCCESS(status)){
+        return NULL;
     }
+    String fileContent = {0};
+    status = FileReadArena(data->arena, file, &fileContent);
+    if(!IS_SUCCESS(status)){
+        // wish defer existed in C =(
+        FileClose(file);
+        return NULL;
+    }
+    
+    FileClose(file);
+    return LoadShader(data->device, fileName, fileContent);
+}
+
+static IStatus SetupAdaptor(WindowData* data){
     WGPURequestAdapterOptions adaptorOptions = {0};
     adaptorOptions.compatibleSurface = data->surface;
     WGPURequestAdapterCallbackInfo adapCallback = {0};
@@ -90,6 +103,10 @@ IStatus SetupRendererForWindow(WindowData* data){
         SysDebug(FAIL, QSTR("couldn't create WGPU adaptor"));
         return ISTATUS_WGPU_FAIL;
     }
+    return ISTATUS_SUCCESS;
+}
+
+static IStatus SetupDevice(WindowData* data){
     WGPURequestDeviceCallbackInfo deviceCallback = {0};
     deviceCallback.callback = HandleDeviceRequest;
     deviceCallback.userdata1 = data;
@@ -104,21 +121,98 @@ IStatus SetupRendererForWindow(WindowData* data){
         SysDebug(FAIL, QSTR("couldn't get WGPU queue"));
         return ISTATUS_WGPU_FAIL;
     }
+    return ISTATUS_SUCCESS;
+}
+
+static WGPUBuffer CreateUniformBuffer(WindowData* data, u64 size){
+    WGPUBufferDescriptor bufDesc = {0};
+    bufDesc.size = size;
+    bufDesc.usage = WGPUBufferUsage_Uniform | WGPUBufferUsage_CopyDst;
+    WGPUBuffer buffer = wgpuDeviceCreateBuffer(data->device, &bufDesc);
+    return buffer;
+}
+
+static WGPUBindGroupLayoutEntry CreateUniformBindGroupLayout(WindowData* data, WGPUShaderStage visibility, u32 binding, u64 size){
+    WGPUBindGroupLayoutEntry bglEntry = {0};
+    bglEntry.binding = binding;
+    bglEntry.visibility = visibility;
+    bglEntry.buffer.type = WGPUBufferBindingType_Uniform;
+    bglEntry.buffer.minBindingSize = size;
+    return bglEntry;
+}
+
+static WGPUBindGroupEntry CreateUniformBindGroup(WGPUBuffer buffer, u32 binding, u32 offset, u64 size){
+    WGPUBindGroupEntry bgEntry = {0};
+    bgEntry.binding = binding;
+    bgEntry.buffer = buffer;
+    bgEntry.offset = offset;
+    bgEntry.size = size;
+    return bgEntry;
+}
+
+static IStatus SetupRenderPipelineLayout(WindowData* data){
+
+    // color uniform setup
+    data->colorBuf = CreateUniformBuffer(data, sizeof(float) * 4);
+    if(data->colorBuf == NULL){
+        SysDebug(FAIL, QSTR("Couldn't create color buffer"));
+        return ISTATUS_WGPU_FAIL;
+    }
+
+    WGPUBindGroupLayoutEntry cbglEntry = CreateUniformBindGroupLayout(data, 
+        WGPUShaderStage_Fragment | WGPUShaderStage_Vertex, 
+        0, sizeof(float) * 4);
+    
+    WGPUBindGroupEntry cbgEntry = CreateUniformBindGroup(data->colorBuf, 0, 0, sizeof(float) * 4);
+
+    // scale uniform setup
+    data->scaleBuf = CreateUniformBuffer(data, sizeof(float));
+    if(data->scaleBuf == NULL){
+        SysDebug(FAIL, QSTR("Couldn't create scale buffer"));
+        return ISTATUS_WGPU_FAIL;
+    }
+
+    WGPUBindGroupLayoutEntry sbglEntry = CreateUniformBindGroupLayout(data, 
+        WGPUShaderStage_Vertex, 
+        1, sizeof(float));
+    
+    WGPUBindGroupEntry sbgEntry = CreateUniformBindGroup(data->scaleBuf, 1, 0, sizeof(float));
+
+    // arrays we store the uniforms
+    WGPUBindGroupLayoutEntry bglEntries[] = {cbglEntry, sbglEntry};
+    u16 bglEntriesSize = ARR_LENGTH(bglEntries);
+    WGPUBindGroupEntry bgEntries[] = {cbgEntry, sbgEntry};
+    u16 bgEntriesSize = ARR_LENGTH(bgEntries);
+    WGPUBindGroupLayoutDescriptor bLayoutDesc = {0};
+    bLayoutDesc.entries = bglEntries;
+    bLayoutDesc.entryCount = bglEntriesSize; // use arr_length next time if it works
+    data->bGroupLayout = wgpuDeviceCreateBindGroupLayout(data->device, &bLayoutDesc);
+    if(data->bGroupLayout == NULL){
+        SysDebug(FAIL, QSTR("Couldn't create bind group layout"));
+        return ISTATUS_WGPU_FAIL;
+    }
+    WGPUBindGroupLayout bfLayoutDesc[] = {data->bGroupLayout};
     String pipelineStr = QSTR("pipeline_layout");
     WGPUPipelineLayoutDescriptor pLayoutDesc = {0};
     pLayoutDesc.label.data = (const char*)pipelineStr.buffer;
     pLayoutDesc.label.length = pipelineStr.length;
+    pLayoutDesc.bindGroupLayoutCount = 1;
+    pLayoutDesc.bindGroupLayouts = bfLayoutDesc;
     data->pipelineLayout = wgpuDeviceCreatePipelineLayout(data->device, &pLayoutDesc);
     if(data->pipelineLayout == NULL){
         SysDebug(FAIL, QSTR("couldn't get WGPU pipeline layout"));
         return ISTATUS_WGPU_FAIL;
     }
-    data->shaderMod = LoadShader(data->device, QSTR("shader"), QSTR(defaultShader));
-    if(data->shaderMod == NULL){
-        SysDebug(FAIL, QSTR("couldn't compile WGPU shader"));
-        return ISTATUS_WGPU_FAIL;
-    }
-    wgpuSurfaceGetCapabilities(data->surface, data->adapter, &data->surfaceCapablities);
+    WGPUBindGroupDescriptor bgDesc = {0};
+    bgDesc.entries = bgEntries;
+    bgDesc.entryCount = bgEntriesSize;
+    bgDesc.layout = data->bGroupLayout;
+    data->bindGroup = wgpuDeviceCreateBindGroup(data->device, &bgDesc);
+    return ISTATUS_SUCCESS;
+}
+
+static IStatus SetupRenderPipeline(WindowData* data){
+     wgpuSurfaceGetCapabilities(data->surface, data->adapter, &data->surfaceCapablities);
     WGPURenderPipelineDescriptor desc = {0};
     String rpStr = QSTR("render_pipeline");
     desc.label.data = (const char*)rpStr.buffer;
@@ -159,6 +253,42 @@ IStatus SetupRendererForWindow(WindowData* data){
         SysDebug(FAIL, QSTR("couldn't create render pipeline"));
         return ISTATUS_WGPU_FAIL;
     }
+    return ISTATUS_SUCCESS;
+}
+
+IStatus SetupRendererForWindow(WindowData* data){
+    data->surface = (void*)SDL_GetWGPUSurface(instance, data->window);
+    if(data->surface == NULL){
+        SysDebug(FAIL, QSTR("couldn't create WGPU surface"));
+        return ISTATUS_WGPU_FAIL;
+    }
+    IStatus status = SetupAdaptor(data);
+    if(!IS_SUCCESS(status)){
+        return status;
+    }
+    status = SetupDevice(data);
+    if(!IS_SUCCESS(status)){
+        return status;
+    }
+
+    status = SetupRenderPipelineLayout(data);
+    if(!IS_SUCCESS(status)){
+        return status;
+    }
+
+    //data->shaderMod = LoadShader(data->device, QSTR("shader"), QSTR(defaultShader));
+    data->shaderMod = LoadShaderFromFile(data, QSTR("shader.wgsl"));
+    if(data->shaderMod == NULL){
+        SysDebug(FAIL, QSTR("couldn't compile WGPU shader"));
+        return ISTATUS_WGPU_FAIL;
+    }
+
+    status = SetupRenderPipeline(data);
+    if(!IS_SUCCESS(status)){
+        return status;
+    }
+
+   
     
     data->surfaceConfig.device = data->device;
     data->surfaceConfig.usage = WGPUTextureUsage_RenderAttachment;
@@ -168,6 +298,7 @@ IStatus SetupRendererForWindow(WindowData* data){
     SDL_GetWindowSize(data->window, (int*)&data->surfaceConfig.width, 
                                             (int*)&data->surfaceConfig.height);
     wgpuSurfaceConfigure(data->surface, &data->surfaceConfig);
+    
     data->doStuffInEndDrawing = TRUE;
     return ISTATUS_SUCCESS;
 }
@@ -181,7 +312,7 @@ static inline void ReconfigureSurface(WGPUSurfaceTexture* texture, WindowData* d
     wgpuSurfaceConfigure(data->surface, &data->surfaceConfig);                                   
 }
 
-ILIB_API void BeginDrawing(Window* window){
+ILIB_API void BeginDrawing(Window* window, Colorf backgroundColor){
     WindowData* data = (WindowData*)window->winData;
     SDL_Event event = {0};
     SDL_WindowID id = SDL_GetWindowID(data->window);
@@ -239,16 +370,6 @@ ILIB_API void BeginDrawing(Window* window){
         data->doStuffInEndDrawing = FALSE;
         return;
     }
-
-
-    // the actual drawing
-    
-    // the actual drawing (ended)
-    
-}   
-
-ILIB_API void DrawHelloTriangle(Window* window){
-    WindowData* data = (WindowData*)window->winData;
     WGPURenderPassDescriptor rpDesc = {0};
     String rpLabel = QSTR("render_pass_encoder");
     rpDesc.label.data = (const char*)rpLabel.buffer;
@@ -259,20 +380,41 @@ ILIB_API void DrawHelloTriangle(Window* window){
     rpcAttach.loadOp = WGPULoadOp_Clear;
     rpcAttach.storeOp = WGPUStoreOp_Store;
     rpcAttach.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
-    rpcAttach.clearValue = (const WGPUColor){0.0, 0.0, 0.0, 0.0};
+    rpcAttach.clearValue = (const WGPUColor){backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a};
     WGPURenderPassColorAttachment rpcAttachs[] = {rpcAttach};
     rpDesc.colorAttachments = rpcAttachs;
-    WGPURenderPassEncoder rpEncoder = wgpuCommandEncoderBeginRenderPass(data->commandEncoder, &rpDesc);
-    if(rpEncoder == NULL){
+    data->renderPassEncoder = wgpuCommandEncoderBeginRenderPass(data->commandEncoder, &rpDesc);
+    if(data->renderPassEncoder == NULL){
         SysDebug(FAIL, QSTR("rpEncoder is NULL\n"));
         window->isRunning = FALSE;
         data->doStuffInEndDrawing = FALSE;
         return;
     }
-    wgpuRenderPassEncoderSetPipeline(rpEncoder, data->renderPipeline);
-    wgpuRenderPassEncoderDraw(rpEncoder, 3, 1, 0, 0);
-    wgpuRenderPassEncoderEnd(rpEncoder);
-    wgpuRenderPassEncoderRelease(rpEncoder);
+
+    // the actual drawing
+    
+    // the actual drawing (ended)
+    
+}   
+
+typedef struct _BlinkData {
+    float blink;
+    float _pad[3];
+} BlinkData;
+
+ILIB_API void DrawHelloTriangle(Window* window){
+    WindowData* data = (WindowData*)window->winData;
+    float color[4] = {1.0, 1.0, 1.0, 1.0};
+    float scale = 0.5;
+    wgpuQueueWriteBuffer(data->queue, data->colorBuf, 
+                0, color, sizeof(color));
+    wgpuQueueWriteBuffer(data->queue, data->scaleBuf, 
+                0, &scale, sizeof(float));
+    
+    
+    wgpuRenderPassEncoderSetPipeline(data->renderPassEncoder, data->renderPipeline);
+    wgpuRenderPassEncoderSetBindGroup(data->renderPassEncoder, 0, data->bindGroup, 0, NULL);
+    wgpuRenderPassEncoderDraw(data->renderPassEncoder, 6, 1, 0, 0);
 }
 
 // ILIB_API void ClearBackground(Window* window, Colorf color){
@@ -304,11 +446,14 @@ ILIB_API void DrawHelloTriangle(Window* window){
 // }
 
 ILIB_API void EndDrawing(Window* window){
+    
     WindowData* data = (WindowData*)window->winData;
     if(data->doStuffInEndDrawing == FALSE){
         data->doStuffInEndDrawing = TRUE;
         return;
     }
+    wgpuRenderPassEncoderEnd(data->renderPassEncoder);
+    wgpuRenderPassEncoderRelease(data->renderPassEncoder);
     WGPUCommandBufferDescriptor cbDesc = {0};
     String cbLabel = QSTR("command_buffer");
     cbDesc.label.data = (const char*)cbLabel.buffer;
@@ -345,6 +490,6 @@ IStatus CleanupRendererForWindow(WindowData* data){
 }
 
 ILIB_API IStatus CleanupRenderer(){
-    wgpuInstanceRelease(instance);;
+    wgpuInstanceRelease(instance);
     return ISTATUS_SUCCESS;
 }
