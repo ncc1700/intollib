@@ -37,6 +37,28 @@ typedef enum _DebugType {
     PASS, FAIL, WARNING, UNKNOWN, INFO
 } DebugType;
 
+typedef struct _Vec2f {
+    float x;
+    float y;
+} Vec2f;
+
+typedef struct _Vec2d {
+    double x;
+    double y;
+} Vec2d;
+
+typedef struct _Vec3f {
+    float x;
+    float y;
+    float z;
+} Vec3f;
+
+typedef struct _Vec3d {
+    double x;
+    double y;
+    double z;
+} Vec3d;
+
 #define FALSE 0
 #define TRUE 1
 
@@ -146,6 +168,8 @@ typedef struct _Window {
 ILIB_API IStatus SetupWindow();
 ILIB_API IStatus InitWindow(Window* window, String title, u32 width, u32 height);
 ILIB_API bool WindowIsRunning(Window* window);
+ILIB_API u32 GetWindowWidth(Window* window);
+ILIB_API u32 GetWindowHeight(Window* window);
 ILIB_API IStatus DeleteWindow(Window* window);
 ILIB_API IStatus CleanupWindow();
 
@@ -163,4 +187,8 @@ ILIB_API void DrawHelloTriangle(Window* window);
 //ILIB_API void ClearBackground(Window* window, Colorf color);
 ILIB_API void EndDrawing(Window* window);
 ILIB_API IStatus CleanupRenderer();
+
+// Quality of Life
+Vec2d NDC2DToScreenSpace2D(Window* window, Vec2f ndc);
+Vec2f ScreenSpace2DToNDC2D(Window* window, Vec2d ss);
 #endif

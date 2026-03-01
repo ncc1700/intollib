@@ -70,6 +70,21 @@ ILIB_API bool WindowIsRunning(Window* window){
     return window->isRunning;
 }
 
+ILIB_API u32 GetWindowWidth(Window* window){
+    WindowData* data = (WindowData*)window->winData;
+    int w;
+    int h;
+    SDL_GetWindowSize(data->window, &w, &h);
+    return w;
+}
+
+ILIB_API u32 GetWindowHeight(Window* window){
+    WindowData* data = (WindowData*)window->winData;
+    int w;
+    int h;
+    SDL_GetWindowSize(data->window, &w, &h);
+    return h;
+}
 
 
 ILIB_API IStatus DeleteWindow(Window* window){

@@ -1,3 +1,5 @@
+#include "SDL3/SDL_oldnames.h"
+#include "SDL3/SDL_timer.h"
 #include "SDL3/SDL_video.h"
 #include "extern/sdl3webgpu.h"
 #include "intollib.h"
@@ -5,6 +7,12 @@
 #include "webgpu/webgpu.h"
 #include <math.h>
 
+typedef struct _VertexData {
+    float scale;
+    float _pad[3];
+    float position[4];
+    float _pad2[3];
+} VertexData;
 
 static WGPUInstance instance = {0};
 
@@ -165,8 +173,8 @@ static IStatus SetupRenderPipelineLayout(WindowData* data){
     
     WGPUBindGroupEntry cbgEntry = CreateUniformBindGroup(data->colorBuf, 0, 0, sizeof(float) * 4);
 
-    // scale uniform setup
-    data->scaleBuf = CreateUniformBuffer(data, sizeof(float));
+    // vertex data setup
+    data->scaleBuf = CreateUniformBuffer(data, sizeof(VertexData));
     if(data->scaleBuf == NULL){
         SysDebug(FAIL, QSTR("Couldn't create scale buffer"));
         return ISTATUS_WGPU_FAIL;
@@ -174,9 +182,9 @@ static IStatus SetupRenderPipelineLayout(WindowData* data){
 
     WGPUBindGroupLayoutEntry sbglEntry = CreateUniformBindGroupLayout(data, 
         WGPUShaderStage_Vertex, 
-        1, sizeof(float));
+        1, sizeof(VertexData));
     
-    WGPUBindGroupEntry sbgEntry = CreateUniformBindGroup(data->scaleBuf, 1, 0, sizeof(float));
+    WGPUBindGroupEntry sbgEntry = CreateUniformBindGroup(data->scaleBuf, 1, 0, sizeof(VertexData));
 
     // arrays we store the uniforms
     WGPUBindGroupLayoutEntry bglEntries[] = {cbglEntry, sbglEntry};
@@ -397,19 +405,57 @@ ILIB_API void BeginDrawing(Window* window, Colorf backgroundColor){
     
 }   
 
-typedef struct _BlinkData {
-    float blink;
-    float _pad[3];
-} BlinkData;
 
 ILIB_API void DrawHelloTriangle(Window* window){
+    static int prev = 0;
+    if(prev == 0){
+        prev = SDL_GetTicks();
+    }
+    static float scale = 0.5;;
+    if(SDL_GetTicks() - prev >= 10){
+        scale += 0.01;
+        prev = SDL_GetTicks();
+    }
     WindowData* data = (WindowData*)window->winData;
     float color[4] = {1.0, 1.0, 1.0, 1.0};
-    float scale = 0.5;
+    VertexData vData = {0};
+    vData.scale = scale;
+    vData.position[0] = 0.8;
+    vData.position[1] = 1.0;
     wgpuQueueWriteBuffer(data->queue, data->colorBuf, 
                 0, color, sizeof(color));
     wgpuQueueWriteBuffer(data->queue, data->scaleBuf, 
-                0, &scale, sizeof(float));
+                0, &vData, sizeof(VertexData));
+    
+    
+    wgpuRenderPassEncoderSetPipeline(data->renderPassEncoder, data->renderPipeline);
+    wgpuRenderPassEncoderSetBindGroup(data->renderPassEncoder, 0, data->bindGroup, 0, NULL);
+    wgpuRenderPassEncoderDraw(data->renderPassEncoder, 6, 1, 0, 0);
+}
+
+ILIB_API void DrawRectangle(Window* window, Vec2d position){
+    static int prev = 0;
+    if(prev == 0){
+        prev = SDL_GetTicks();
+    }
+    static float scale = 0.5;;
+    if(SDL_GetTicks() - prev >= 10){
+        scale += 0.01;
+        prev = SDL_GetTicks();
+    }
+    
+    WindowData* data = (WindowData*)window->winData;
+    float color[4] = {1.0, 1.0, 1.0, 1.0};
+    float pos[4] = {1.0, 1.0, 0.0, 0.0};
+    VertexData vData = {0};
+    vData.scale = scale;
+    vData.position[0] = 1.0;
+    vData.position[1] = 1.0;
+    
+    wgpuQueueWriteBuffer(data->queue, data->colorBuf, 
+                0, color, sizeof(color));
+    wgpuQueueWriteBuffer(data->queue, data->scaleBuf, 
+                0, &vData, sizeof(VertexData));
     
     
     wgpuRenderPassEncoderSetPipeline(data->renderPassEncoder, data->renderPipeline);
