@@ -1,6 +1,7 @@
 #include "nanoprintf/nprintfimpl.h"
 #include <Windows.h>
 #include <intollib.h>
+#include <stdio.h>
 
 
 ILIB_API void SysPrintCStr(const char* cstr){
@@ -35,7 +36,6 @@ ILIB_API void SysDebug(DebugType type, String str, ...){
             SysPrint(QSTR("[WARNING] "));
             break;
         default:
-            SysPrint(QSTR("[?] "));
             break;
     }
     // very bad
@@ -49,7 +49,7 @@ ILIB_API void SysDebug(DebugType type, String str, ...){
     }
     char* cstr = QStringToCStringHeap(trueStr);
     va_list arg;
-    va_start(arg, C(str.buffer));
+    va_start(arg, str.buffer);
     ImplVsnprintf(buffer, 256, 
                     cstr, arg);
     va_end(arg);

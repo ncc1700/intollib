@@ -16,7 +16,8 @@ static const char* IStatusToCStr[] = {
     [ISTATUS_INVALID_PARAMETERS] = "Invalid parameters",
     [ISTATUS_CANT_CREATE_FILE] = "Cannot create file",
     [ISTATUS_ZERO_SIZE] = "The size is 0",
-    [ISTATUS_CANT_READ] = "Cannot read contents"
+    [ISTATUS_CANT_READ] = "Cannot read contents",
+    [ISTATUS_NOT_INITIALIZED] = "You haven't initialized intollib"
 };
 
 

@@ -20,6 +20,7 @@ ILIB_API IStatus SetupWindow(){
 }
 
 ILIB_API IStatus InitWindow(Window* window, String title, u32 width, u32 height){
+    SysDebug(INFO, QSTR("creating window...."));
     Arena arena = {0};
     IStatus status = CreateArena(&arena, 
             ((title.length + 10) * sizeof(char)));
@@ -62,6 +63,9 @@ ILIB_API IStatus InitWindow(Window* window, String title, u32 width, u32 height)
     window->isRunning = TRUE;
     window->winData = (void*)data;
 EXIT:
+    if(status == ISTATUS_SUCCESS){
+        SysDebug(PASS, QSTR("window has been created"));
+    }
     DestroyArena(&arena);
     return status;
 }

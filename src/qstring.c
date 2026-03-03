@@ -36,23 +36,25 @@ ILIB_API String InitString(u8* str){
 
 // ALLOCATES MEMORY FROM HEAP
 ILIB_API char* QStringToCStringHeap(String str){
-    char* s = AllocateMemory(str.length * sizeof(char));
-
-    for(u64 i = 0; i < str.length; i++){
+    char* s = AllocateMemory(((str.length + 1) * sizeof(char)));
+    u64 i = 0;
+    for(i = 0; i < str.length; i++){
         if(i >= str.length) break;
         s[i] = str.buffer[i];
     }
+    s[i] = '\0';
     return s;
 }
 
 // ALLOCATES MEMORY FROM ARENA
 ILIB_API char* QStringToCStringArena(Arena* arena, String str){
-    char* s = PushMemoryFromArena(arena, str.length * sizeof(char));
-
-    for(u64 i = 0; i < str.length; i++){
+    char* s = PushMemoryFromArena(arena, ((str.length + 1) * sizeof(char)));
+    u64 i = 0;
+    for(i = 0; i < str.length; i++){
         if(i >= str.length) break;
         s[i] = str.buffer[i];
     }
+    s[i] = '\0';
     return s;
 }
 
