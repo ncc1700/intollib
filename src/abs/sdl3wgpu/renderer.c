@@ -161,8 +161,8 @@ static WGPUBindGroupEntry CreateUniformBindGroup(WGPUBuffer buffer, u32 binding,
 static IStatus SetupRenderPipelineLayout(WindowData* data){
 
     // color uniform setup
-    data->colorBuf = CreateUniformBuffer(data, sizeof(float) * 4);
-    if(data->colorBuf == NULL){
+    data->fragBuf = CreateUniformBuffer(data, sizeof(float) * 4);
+    if(data->fragBuf == NULL){
         SysDebug(FAIL, QSTR("Couldn't create color buffer"));
         return ISTATUS_WGPU_FAIL;
     }
@@ -171,11 +171,11 @@ static IStatus SetupRenderPipelineLayout(WindowData* data){
         WGPUShaderStage_Fragment | WGPUShaderStage_Vertex, 
         0, sizeof(float) * 4);
     
-    WGPUBindGroupEntry cbgEntry = CreateUniformBindGroup(data->colorBuf, 0, 0, sizeof(float) * 4);
+    WGPUBindGroupEntry cbgEntry = CreateUniformBindGroup(data->fragBuf, 0, 0, sizeof(float) * 4);
 
     // vertex data setup
-    data->scaleBuf = CreateUniformBuffer(data, sizeof(VertexData));
-    if(data->scaleBuf == NULL){
+    data->vertexUniBuf = CreateUniformBuffer(data, sizeof(VertexData));
+    if(data->vertexUniBuf == NULL){
         SysDebug(FAIL, QSTR("Couldn't create scale buffer"));
         return ISTATUS_WGPU_FAIL;
     }
@@ -184,7 +184,7 @@ static IStatus SetupRenderPipelineLayout(WindowData* data){
         WGPUShaderStage_Vertex, 
         1, sizeof(VertexData));
     
-    WGPUBindGroupEntry sbgEntry = CreateUniformBindGroup(data->scaleBuf, 1, 0, sizeof(VertexData));
+    WGPUBindGroupEntry sbgEntry = CreateUniformBindGroup(data->vertexUniBuf, 1, 0, sizeof(VertexData));
 
     // arrays we store the uniforms
     WGPUBindGroupLayoutEntry bglEntries[] = {cbglEntry, sbglEntry};
@@ -411,20 +411,20 @@ ILIB_API void DrawHelloTriangle(Window* window){
     if(prev == 0){
         prev = SDL_GetTicks();
     }
-    static float scale = 0.5;;
+    static float pos = 0.5;;
     if(SDL_GetTicks() - prev >= 10){
-        scale += 0.01;
+        pos += 0.01;
         prev = SDL_GetTicks();
     }
     WindowData* data = (WindowData*)window->winData;
     float color[4] = {1.0, 1.0, 1.0, 1.0};
     VertexData vData = {0};
-    vData.scale = scale;
+    vData.scale = 1.0;
     vData.position[0] = 0.8;
-    vData.position[1] = 1.0;
-    wgpuQueueWriteBuffer(data->queue, data->colorBuf, 
+    vData.position[1] = pos;
+    wgpuQueueWriteBuffer(data->queue, data->fragBuf, 
                 0, color, sizeof(color));
-    wgpuQueueWriteBuffer(data->queue, data->scaleBuf, 
+    wgpuQueueWriteBuffer(data->queue, data->vertexUniBuf, 
                 0, &vData, sizeof(VertexData));
     
     
@@ -452,9 +452,9 @@ ILIB_API void DrawRectangle(Window* window, Vec2d position){
     vData.position[0] = 1.0;
     vData.position[1] = 1.0;
     
-    wgpuQueueWriteBuffer(data->queue, data->colorBuf, 
+    wgpuQueueWriteBuffer(data->queue, data->fragBuf, 
                 0, color, sizeof(color));
-    wgpuQueueWriteBuffer(data->queue, data->scaleBuf, 
+    wgpuQueueWriteBuffer(data->queue, data->vertexUniBuf, 
                 0, &vData, sizeof(VertexData));
     
     
@@ -524,6 +524,10 @@ ILIB_API void EndDrawing(Window* window){
 }
 
 IStatus CleanupRendererForWindow(WindowData* data){
+    wgpuBufferRelease(data->fragBuf);
+    wgpuBufferRelease(data->vertexUniBuf);
+    wgpuBindGroupRelease(data->bindGroup);
+    wgpuBindGroupLayoutRelease(data->bGroupLayout);
     wgpuRenderPipelineRelease(data->renderPipeline);
     wgpuPipelineLayoutRelease(data->pipelineLayout);
     wgpuShaderModuleRelease(data->shaderMod);

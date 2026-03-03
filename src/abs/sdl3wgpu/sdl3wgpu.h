@@ -17,8 +17,8 @@ typedef struct _WindowData {
     Arena* arena;
     WGPUBindGroup bindGroup;
     WGPUBindGroupLayout bGroupLayout;
-    WGPUBuffer colorBuf;
-    WGPUBuffer scaleBuf;
+    WGPUBuffer fragBuf;
+    WGPUBuffer vertexUniBuf;
     WGPUCommandEncoder commandEncoder;
     WGPURenderPassEncoder renderPassEncoder;
     WGPUSurfaceTexture surfaceText;
