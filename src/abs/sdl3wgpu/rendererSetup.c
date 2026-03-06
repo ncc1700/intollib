@@ -133,8 +133,12 @@ IStatus SetupRendererForWindow(WindowData* data){
     return ISTATUS_SUCCESS;
 }
 
-ILIB_API void BeginDrawing(Window* window, Colorf backgroundColor){
+ILIB_API void BeginDrawing(Window* window, Color backgroundColor){
     WindowData* data = (WindowData*)window->winData;
+    Colorf wgpuColor = {(float)backgroundColor.r / 255, 
+                        (float)backgroundColor.g / 255, 
+                        (float)backgroundColor.b / 255,
+                        (float)backgroundColor.a / 255};
     SDL_Event event = {0};
     SDL_WindowID id = SDL_GetWindowID(data->window);
     while(SDL_PollEvent(&event)){
@@ -153,9 +157,7 @@ ILIB_API void DrawHelloTriangle(Window* window){
     
 }
 
-ILIB_API void DrawRectangle(Window* window, Vec2d position){
-    
-}
+
 
 
 

@@ -14,8 +14,10 @@ int main(){
         return status;
     }
     while(WindowIsRunning(&win)){
-        BeginDrawing(&win, RGBF(0.0, 0.3, 0.3, 1.0));
-        DrawHelloTriangle(&win);
+        BeginDrawing(&win, RGB(0, 0, 0, 255));
+        IRectangle rect = {90, 90, 100, 100};
+        DrawRectangle(&win, rect, RGB(0, 255, 255, 255));
+        DrawString(&win, "Hello!", 10, 10, 1, RGB(255, 255, 255, 255));
         EndDrawing(&win);
     }
     DeleteWindow(&win);

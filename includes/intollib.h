@@ -180,10 +180,31 @@ typedef struct _Colorf {
     float b;
     float a;
 } Colorf;
+
+typedef struct _Color {
+    u8 r;
+    u8 g; 
+    u8 b;
+    u8 a;
+} Color;
+
+typedef struct _IRectangle {
+    u32 x;
+    u32 y;
+    u32 w;
+    u32 h;
+} IRectangle;
+
 #define RGBF(r, g, b, a) ((Colorf){r, g, b, a})
+#define RGB(r, g, b, a) ((Color){r, g, b, a})
+
 ILIB_API IStatus SetupRenderer();
-ILIB_API void BeginDrawing(Window* window, Colorf backgroundColor);
+ILIB_API void BeginDrawing(Window* window, Color backgroundColor);
 ILIB_API void DrawHelloTriangle(Window* window);
+ILIB_API void DrawRectangleLine(Window* window, IRectangle rect, Color color);
+ILIB_API void DrawRectangle(Window* window, IRectangle rect, Color color);
+ILIB_API void DrawChar(Window* window, char c, u32 x, u32 y, u32 size, Color color);
+ILIB_API void DrawString(Window* window, const char* s, u32 x, u32 y, u32 size, Color color);
 //ILIB_API void ClearBackground(Window* window, Colorf color);
 ILIB_API void EndDrawing(Window* window);
 ILIB_API IStatus CleanupRenderer();

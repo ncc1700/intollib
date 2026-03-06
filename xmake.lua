@@ -13,7 +13,7 @@ target("intollib-win64")
 
     add_files("src/osapi/win/*.c", "src/osapi/*.c");
     add_files("src/extern/**/*.c");
-    add_files("src/abs/sdl3wgpu/*.c", "src/abs/sdl3wgpu/**/*.c")
+    add_files("src/abs/sdl3/*.c", "src/abs/sdl3/**/*.c")
     add_files("src/*.c")
     add_includedirs("includes")
 
