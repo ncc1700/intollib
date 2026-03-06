@@ -16,7 +16,7 @@ ILIB_API void DrawChar(Window* window, char c, u32 x, u32 y, u32 size, Color col
     }
 }
 
-ILIB_API void DrawString(Window* window, const char* s, u32 x, u32 y, u32 size, Color color){
+ILIB_API void DrawRawString(Window* window, const char* s, u32 x, u32 y, u32 size, Color color){
     u32 currentX = x;
     u32 currentY = y;
     u32 fsize = 8;
@@ -24,5 +24,15 @@ ILIB_API void DrawString(Window* window, const char* s, u32 x, u32 y, u32 size, 
         DrawChar(window, *s, currentX, currentY, size, color);
         currentX += size * fsize;
         s++;
+    }
+}
+
+ILIB_API void DrawString(Window* window, String s, u32 x, u32 y, u32 size, Color color){
+    u32 currentX = x;
+    u32 currentY = y;
+    u32 fsize = 8;
+    for(u64 i = 0; i < s.length; i++){
+        DrawChar(window, s.buffer[i], currentX, currentY, size, color);
+        currentX += size * fsize;
     }
 }

@@ -1,6 +1,4 @@
-#include "SDL3/SDL_events.h"
 #include "SDL3/SDL_init.h"
-#include "SDL3/SDL_oldnames.h"
 #include "SDL3/SDL_video.h"
 #include "sdl3data.h"
 #include <SDL3/SDL.h>

@@ -1,7 +1,6 @@
 #include "nanoprintf/nprintfimpl.h"
 #include <Windows.h>
 #include <intollib.h>
-#include <stdio.h>
 
 
 ILIB_API void SysPrintCStr(const char* cstr){

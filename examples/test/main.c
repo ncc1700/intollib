@@ -24,7 +24,10 @@ int main(){
         IRectangle rect = {GetMouseX(&win), GetMouseY(&win), 100, 100};
         DrawRectangle(&win, rect, color);
         if(IsKeyDown(&win, 'h')){
-            DrawString(&win, "Hello!", 10, 10, 1, RGB(255, 255, 255, 255));
+            DrawString(&win, QSTR("Hello!"), 10, 10, 1, RGB(255, 255, 255, 255));
+        } else {
+            DrawString(&win, QSTR("Click 'h' on your keyboard!"), 
+                        10, 10, 1, RGB(255, 255, 255, 255));
         }
         EndDrawing(&win);
     }

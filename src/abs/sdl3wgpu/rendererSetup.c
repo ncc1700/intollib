@@ -1,6 +1,3 @@
-#include "SDL3/SDL_mutex.h"
-#include "SDL3/SDL_oldnames.h"
-#include "SDL3/SDL_timer.h"
 #include "SDL3/SDL_video.h"
 #include "extern/sdl3webgpu.h"
 #include "intollib.h"
