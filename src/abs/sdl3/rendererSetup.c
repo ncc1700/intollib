@@ -16,6 +16,7 @@
 ILIB_API IStatus SetupRenderer(){
     return ISTATUS_SUCCESS;
 }
+
 IStatus SetupRendererForWindow(WindowData* data){
     data->renderer = SDL_CreateRenderer(data->window, NULL);
     if(data->renderer == NULL){

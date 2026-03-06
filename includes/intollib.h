@@ -47,6 +47,11 @@ typedef struct _Vec2d {
     double y;
 } Vec2d;
 
+typedef struct _Vec2 {
+    u64 x;
+    u64 y;
+} Vec2;
+
 typedef struct _Vec3f {
     float x;
     float y;
@@ -58,6 +63,12 @@ typedef struct _Vec3d {
     double y;
     double z;
 } Vec3d;
+
+typedef struct _Vec3 {
+    u64 x;
+    u64 y;
+    u64 z;
+} Vec3;
 
 #define FALSE 0
 #define TRUE 1
@@ -154,25 +165,44 @@ ILIB_API IStatus FileReadArena(Arena* arena, Handle file, String* str);
 ILIB_API IStatus FileClose(Handle file);
 
 // Window API
+#define MOUSE_BUTTON_NONE 0
+#define MOUSE_BUTTON_LEFT 1
+#define MOUSE_BUTTON_RIGHT 2
+#define MOUSE_BUTTON_MIDDLE 3
+typedef struct _MouseInfo {
+    u32 x;
+    u32 y;
+    u8 button;
+} MouseInfo;
+
 typedef struct _Window {
     void* winData;
     void* renderer;
     Arena arena;
     u64 curKey;
-    u8 curMouse;
+    MouseInfo curMouse;
     u32 width;
     u32 height;
     bool isRunning;
 } Window;
+
+#define KEY_ESC 129
+#define KEY_DELETE 130
+#define KEY_PLUSMINUS 131
 
 ILIB_API IStatus SetupWindow();
 ILIB_API IStatus InitWindow(Window* window, String title, u32 width, u32 height);
 ILIB_API bool WindowIsRunning(Window* window);
 ILIB_API u32 GetWindowWidth(Window* window);
 ILIB_API u32 GetWindowHeight(Window* window);
+ILIB_API u8 GetKey(Window* window);
+ILIB_API bool IsKeyDown(Window* window, u8 key);
+ILIB_API Vec2 GetMousePosition(Window* window);
+ILIB_API u64 GetMouseX(Window* window);
+ILIB_API u64 GetMouseY(Window* window);
+ILIB_API bool IsMouseDown(Window* window, u64 button);
 ILIB_API IStatus DeleteWindow(Window* window);
 ILIB_API IStatus CleanupWindow();
-
 // Renderer API
 typedef struct _Colorf {
     float r;

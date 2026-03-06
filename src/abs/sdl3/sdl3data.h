@@ -23,8 +23,8 @@ typedef struct _WindowData {
 
 IStatus SetupRendererForWindow(WindowData* data);
 IStatus CleanupRendererForWindow(WindowData* data);
-
-
+u8 KeyCodeToChar(u8 keyCode);
+u8 SDLMouseToIntollibMouse(u8 sdlMouse);
 
 
 

@@ -15,9 +15,17 @@ int main(){
     }
     while(WindowIsRunning(&win)){
         BeginDrawing(&win, RGB(0, 0, 0, 255));
-        IRectangle rect = {90, 90, 100, 100};
-        DrawRectangle(&win, rect, RGB(0, 255, 255, 255));
-        DrawString(&win, "Hello!", 10, 10, 1, RGB(255, 255, 255, 255));
+        Color color;
+        if(IsMouseDown(&win, MOUSE_BUTTON_LEFT)){
+            color = RGB(255, 255, 0, 255);
+        } else {
+            color = RGB(0, 255, 255, 255);
+        }
+        IRectangle rect = {GetMouseX(&win), GetMouseY(&win), 100, 100};
+        DrawRectangle(&win, rect, color);
+        if(IsKeyDown(&win, 'h')){
+            DrawString(&win, "Hello!", 10, 10, 1, RGB(255, 255, 255, 255));
+        }
         EndDrawing(&win);
     }
     DeleteWindow(&win);

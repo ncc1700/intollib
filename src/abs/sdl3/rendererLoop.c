@@ -1,3 +1,4 @@
+#include "SDL3/SDL_events.h"
 #include "intollib.h"
 #include "sdl3data.h"
 
@@ -24,6 +25,22 @@ ILIB_API void BeginDrawing(Window* window, Color backgroundColor){
         }
         if(id != event.window.windowID){
             continue;
+        }
+        if(event.type == SDL_EVENT_KEY_DOWN){
+            window->curKey = KeyCodeToChar(event.key.key);
+        } else {
+            window->curKey = 0;
+        }
+        if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN){
+            window->curMouse.button = SDLMouseToIntollibMouse(event.button.button);
+            window->curMouse.x = event.button.x;
+            window->curMouse.y = event.button.y;
+        } else {
+            window->curMouse.button = 0;
+        }
+        if(event.type == SDL_EVENT_MOUSE_MOTION){
+            window->curMouse.x = event.motion.x;
+            window->curMouse.y = event.motion.y;
         }
     }
     SDL_SetRenderDrawColorFloat(data->renderer, 
